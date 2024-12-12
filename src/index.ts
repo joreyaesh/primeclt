@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { widgets } from "./routes/widgets";
-import { Command } from "commander";
+import { Command, type OptionValues } from "commander";
 import Spinner from "./utils/misc/spinner";
 import { translateToTailwind } from "./utils/helpers/primeflex";
 import { uninstall } from "./utils/helpers/clt";
@@ -17,9 +17,19 @@ program.addCommand(widgets);
 
 program
 	.command("pf2tw")
-	.description("Translate PrimeFlex classes to Tailwind CSS classes")
-	.action(async () => {
-		await translateToTailwind();
+	.aliases(["pf32tw"])
+	.description("Translate PrimeFlex 3.x classes to Tailwind CSS classes")
+	.option("-s, --styles", "Include stylesheets (CSS, SCSS, etc.)")
+	.action(async (options: OptionValues) => {
+		await translateToTailwind(options);
+	});
+
+program
+	.command("pf22tw")
+	.description("Translate PrimeFlex 2.x classes to Tailwind CSS classes")
+	.option("-s, --styles", "Include stylesheets (CSS, SCSS, etc.)")
+	.action(async (options: OptionValues) => {
+		await translateToTailwind(options, true);
 	});
 
 program

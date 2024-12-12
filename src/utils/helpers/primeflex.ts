@@ -1,7 +1,8 @@
 import inquirer from "inquirer";
 import { startTranslation } from "./twConverter";
+import type {OptionValues} from 'commander';
 
-export async function translateToTailwind() {
+export async function translateToTailwind(options: OptionValues, fromPrimeFlex2 = false) {
 	const currentDirectoryAnswer = await inquirer.prompt([
 		{
 			type: "confirm",
@@ -27,5 +28,5 @@ export async function translateToTailwind() {
 		folderDirectory = process.cwd();
 	}
 
-	await startTranslation(folderDirectory);
+	await startTranslation(folderDirectory, options, fromPrimeFlex2);
 }
