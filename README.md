@@ -20,4 +20,5 @@ npm install -g primeclt
 | prime vue update-preset | Update cache and project preset                                                                                                                         | Vite                         |
 | prime vue clear-cache   | Removes the cached preset files                                                                                                                         | Vite                         |
 | prime uninstall         | Uninstalls PrimeClT                                                                                                                                     | Vite                         |
-| prime pf2tw             | Converts PrimeFlex classes to Tailwind CSS classes (Usable on multiple folders and files. E.g: ./src/components will check every folder and every file) | .js .ts .jsx .tsx .vue .html |
+| prime pf2tw             | Converts PrimeFlex 3 classes to Tailwind CSS classes (Usable on multiple folders and files. E.g: ./src/components will check every folder and every file) | .js .ts .jsx .tsx .vue .html |
+| prime pf22tw             | Converts PrimeFlex 2 classes to Tailwind CSS classes (Usable on multiple folders and files. E.g: ./src/components will check every folder and every file) | .js .ts .jsx .tsx .vue .html |
