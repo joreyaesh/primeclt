@@ -14,7 +14,7 @@ function directTranslateToTailwind(
 	translationDict: Record<string, string>,
 	prefix = ''
 ): string {
-	const stringPattern = /(?<!\*ng[A-Z]\w+=)(["'`])((?:\\\1|(?:(?!\1)).)*)(\1)/g;
+	const stringPattern = /(?<!\*ng[A-Z]\w+\]?=)(["'`])((?:\\\1|(?:(?!\1)).)*)(\1)/g;
 
 	const output = htmlContent.replace(
 		stringPattern,
