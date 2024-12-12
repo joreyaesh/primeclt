@@ -2,6 +2,7 @@ import type {OptionValues} from 'commander';
 import * as fs from "fs";
 import * as path from "path";
 import primeflex2To3RegexDict from "../data/primeflex2To3RegexDict";
+import primeFlexClassSet from "../data/primeFlexClassSet";
 import translation from "../data/translationDict.json";
 
 function preprocessHtml(htmlContent: string): string {
@@ -10,9 +11,10 @@ function preprocessHtml(htmlContent: string): string {
 
 function directTranslateToTailwind(
 	htmlContent: string,
-	translationDict: Record<string, string>
+	translationDict: Record<string, string>,
+	prefix = ''
 ): string {
-	const stringPattern = /(["'`])((?:\\\1|(?:(?!\1)).)*)(\1)/g;
+	const stringPattern = /(?<!\*ng[A-Z]\w+=)(["'`])((?:\\\1|(?:(?!\1)).)*)(\1)/g;
 
 	const output = htmlContent.replace(
 		stringPattern,
@@ -24,7 +26,60 @@ function directTranslateToTailwind(
 		) => {
 			const parts = content.split(" ");
 			const translatedParts = parts.map((part) => {
-				return translationDict[part] || part;
+				let translated = part;
+
+				if (part in translationDict) {
+					// Split dictionary value into individual classes
+					const translatedClasses = translationDict[part].split(" ").map(className => {
+						if (prefix) {
+							// Handle responsive prefixes and negative values
+							const segments = className.split(':');
+
+							if (segments.length === 2) {
+								// Has responsive prefix
+								const [screen, name] = segments;
+								if (name.startsWith('-')) {
+									// Negative value
+									return `${screen}:-${prefix}${name.substring(1)}`;
+								}
+								return `${screen}:${prefix}${name}`;
+							} else {
+								// No responsive prefix
+								if (className.startsWith('-')) {
+									// Negative value
+									return `-${prefix}${className.substring(1)}`;
+								}
+								return `${prefix}${className}`;
+							}
+						}
+						return className;
+					});
+					return translatedClasses.join(" ");
+				}
+
+				if (prefix && primeFlexClassSet.has(part)) {
+					// Handle responsive prefixes and negative values
+					const segments = translated.split(':');
+
+					if (segments.length === 2) {
+						// Has responsive prefix
+						const [screen, className] = segments;
+						if (className.startsWith('-')) {
+							// Negative value
+							return `${screen}:-${prefix}${className.substring(1)}`;
+						}
+						return `${screen}:${prefix}${className}`;
+					} else {
+						// No responsive prefix
+						if (translated.startsWith('-')) {
+							// Negative value
+							return `-${prefix}${translated.substring(1)}`;
+						}
+						return `${prefix}${translated}`;
+					}
+				}
+
+				return translated;
 			});
 
 			return `${quoteStart}${translatedParts.join(" ")}${quoteEnd}`;
@@ -34,12 +89,14 @@ function directTranslateToTailwind(
 	return output;
 }
 
-function translatePrimeFlex2ToPrimeFlex3(vueContent: string): string {
+function translatePrimeFlex2ToPrimeFlex3(vueContent: string, prefix = ''): string {
 	let output = vueContent;
 
-	Object.keys(primeflex2To3RegexDict).forEach((key) => {
-		const regex = new RegExp(key, "g");
-		output = output.replace(regex, primeflex2To3RegexDict[key as keyof typeof primeflex2To3RegexDict]);
+	Object.keys(primeflex2To3RegexDict).forEach((part) => {
+		const regex = new RegExp(part, "g");
+		if (part in primeflex2To3RegexDict) {
+			output = output.replace(regex, `${prefix}${primeflex2To3RegexDict[part as keyof typeof primeflex2To3RegexDict]}`);
+		}
 	});
 
 	return output;
@@ -51,7 +108,7 @@ function processFolder(
 	options: OptionValues,
 	fromPrimeFlex2: boolean
 ) {
-	if (folderPath.includes("node_modules")) {
+	if (folderPath.includes("node_modules") || folderPath.includes(".git") || folderPath.includes(".angular")) {
 		return;
 	}
 
@@ -83,12 +140,13 @@ function processFolder(
 					let vueContent = preprocessHtml(data);
 
 					if (fromPrimeFlex2) {
-						vueContent = translatePrimeFlex2ToPrimeFlex3(vueContent);
+						vueContent = translatePrimeFlex2ToPrimeFlex3(vueContent, options.prefix);
 					}
 
 					vueContent = directTranslateToTailwind(
 						vueContent,
-						translationDict
+						translationDict,
+						options.prefix
 					);
 
 					fs.writeFile(filePath, vueContent, "utf8", (err) => {
